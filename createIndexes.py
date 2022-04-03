@@ -18,7 +18,7 @@ class CreateIndexes():
             },
             "mappings":{
                 "properties":{
-                    "recipesId":{
+                    "recipeId":{
                         "type":"keyword"
                     },
                     "title":{
@@ -29,11 +29,15 @@ class CreateIndexes():
                         "type":"text",
                         "similarity":"BM25"
                     },
-                    "sentence_embedding_NQ": {
+                    "sentence_embedding_title": {
                     "type": "knn_vector",
                     "model_id": "model_kwiz"
                     },
-                    "sentence_embedding_NQ_FT": {
+                    "sentence_embedding_description": {
+                    "type": "knn_vector",
+                    "model_id": "model_kwiz"
+                    },
+                    "sentence_embedding_title_trained": {
                     "type": "knn_vector",
                     "model_id": "model_kwiz"
                     }

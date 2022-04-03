@@ -24,8 +24,8 @@ class IndexRecipes():
                 recipeDescriptionString = ' '.join([token.lemma_ for token in recipeDescriptionDoc if not token.is_stop and token.is_alpha])
             doc = {
             'recipeId': recipeId,
-            'recipeTitle': recipeTitleString,
-            'recipeDescription': recipeDescriptionString,
+            'title': recipeTitleString,
+            'description': recipeDescriptionString,
             }
             resp = self.client.index(index=self.index_name, id=recipeId, body=doc)
             print(resp['result'])        
