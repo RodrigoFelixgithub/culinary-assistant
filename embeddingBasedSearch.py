@@ -1,3 +1,4 @@
+from transformers import AutoTokenizer, AutoModel
 import pprint as pp
 from pathlib import Path
 import torch
@@ -7,6 +8,14 @@ class EmbeddingBasedSearch():
     def __init__(self, client, index_name):
         self.client = client
         self.index_name = index_name
+        # Load model from HuggingFace Hub
+        self.tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/msmarco-distilbert-base-v2")
+        self.model = AutoModel.from_pretrained("sentence-transformers/msmarco-distilbert-base-v2")
+   
+    def mean_pooling(self, model_output, attention_mask):
+        token_embeddings = model_output.last_hidden_state #First element of model_output contains all token embeddings
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
     #Encode text
     def encode(self, texts):
@@ -27,7 +36,7 @@ class EmbeddingBasedSearch():
             
     def queryOpenSearch(self, qtxt):
         query_emb = self.encode(qtxt)
-
+        
         query_denc = {
         'size': 5,
         #  '_source': ['doc_id', 'contents', 'sentence_embedding'],
@@ -35,10 +44,10 @@ class EmbeddingBasedSearch():
         '_source': ['doc_id'],
         "query": {
                 "knn": {
-                "sentence_embedding": {
-                    "vector": query_emb[0].numpy(),
-                    "k": 2
-                }
+                    "sentence_embedding_title": {
+                        "vector": query_emb[0].numpy(),
+                        "k": 2
+                    }
                 }
             }
         }
