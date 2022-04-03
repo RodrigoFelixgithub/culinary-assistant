@@ -48,8 +48,8 @@ class CreateEmbeddingsMap():
                 recipeDescription = recipes[recipeId]['recipe']['description']
                 description_emb = self.encode(recipeDescription)
             embeddings[recipeId]={}
-            embeddings[recipeId]["title_embedding"] = title_emb[0].numpy()
-            embeddings[recipeId]["description_embedding"] = description_emb[0].numpy()
+            embeddings[recipeId]["title_embedding"] = title_emb[0].numpy().tolist()
+            embeddings[recipeId]["description_embedding"] = description_emb[0].numpy().tolist()
         #escrever o ficheiro 
         f = open(self.outputFileName, 'w')
         f.write(json.dumps(embeddings))
