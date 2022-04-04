@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 import json as json
 
-class CreateEmbeddingsMap():
+class ComputeEmbeddings():
     def __init__(self, inputFileName, outputFileName):
         self.inputFileName = inputFileName
         self.outputFileName = outputFileName
@@ -39,20 +39,28 @@ class CreateEmbeddingsMap():
     def createMap(self):
         with open(self.inputFileName, "r") as read_file:
             recipes = json.load(read_file)
+
         embeddings = {}
+
         for recipeId in recipes:
-            recipeTitle = recipes[recipeId]['recipe']['displayName']       
+            embeddings[recipeId]={}
+            
             # Sentences we want sentence embeddings for
+            # Title
+            recipeTitle = recipes[recipeId]['recipe']['displayName']
             title_emb = self.encode(recipeTitle)
+            embeddings[recipeId]["title_embedding"] = title_emb[0].numpy().tolist()
+
+            # Description
             if recipes[recipeId]['recipe']['description'] != None :
                 recipeDescription = recipes[recipeId]['recipe']['description']
                 description_emb = self.encode(recipeDescription)
-            embeddings[recipeId]={}
-            embeddings[recipeId]["title_embedding"] = title_emb[0].numpy().tolist()
-            embeddings[recipeId]["description_embedding"] = description_emb[0].numpy().tolist()
-        #escrever o ficheiro 
+                embeddings[recipeId]["description_embedding"] = description_emb[0].numpy().tolist()
+            
+        # Write to file
         f = open(self.outputFileName, 'w')
         f.write(json.dumps(embeddings))
+
         return
     
     

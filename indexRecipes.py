@@ -13,14 +13,16 @@ class IndexRecipes():
 
     def indexRecipes(self):
         nlp = spacy.load("en_core_web_sm")
+
         with open(self.recipesFile, "r") as read_file:
             recipes = json.load(read_file)
+
         with open(self.embeddingsFile, "r") as read_file:
             embeddings = json.load(read_file)
 
         for recipeId in recipes:
 
-            #tokenization and lemmatization of the recipe title and description, in this part we use the recipes file
+            # Tokenization of the recipe title and description, using the recipes file
             recipeTitleDoc = nlp(recipes[recipeId]['recipe']['displayName'])
             recipeTitleString = ' '.join([token.lemma_ for token in recipeTitleDoc if not token.is_stop and token.is_alpha])
             if recipes[recipeId]['recipe']['description'] == None :
@@ -29,19 +31,23 @@ class IndexRecipes():
                 recipeDescriptionDoc = nlp(recipes[recipeId]['recipe']['description'])
                 recipeDescriptionString = ' '.join([token.lemma_ for token in recipeDescriptionDoc if not token.is_stop and token.is_alpha])
             
-            #get the embeddings from the embeddings file and use them in the indexes
+            # Get embeddings from the embeddings file to use in the indexes
             sentence_embedding_title = numpy.asarray(embeddings[recipeId]['title_embedding'])
-            sentence_embedding_description = numpy.asarray(embeddings[recipeId]['description_embedding'])
-            sentence_embedding_title_trained = numpy.asarray(embeddings[recipeId]['title_embedding'])
+            if recipeDescriptionString == None :
+                doc = {
+                    'recipeId': recipeId,
+                    'title': recipeTitleString,
+                    'sentence_embedding_title': sentence_embedding_title,
+                }
+            else:
+                doc = {
+                    'recipeId': recipeId,
+                    'title': recipeTitleString,
+                    'description': recipeDescriptionString,
+                    'sentence_embedding_title': sentence_embedding_title,
+                    'sentence_embedding_description': numpy.asarray(embeddings[recipeId]['description_embedding'])
+                }
 
-            doc = {
-            'recipeId': recipeId,
-            'title': recipeTitleString,
-            'description': recipeDescriptionString,
-            'sentence_embedding_title': sentence_embedding_title,
-            'sentence_embedding_description': sentence_embedding_description,
-            'sentence_embedding_title_trained':sentence_embedding_title_trained
-            }
             resp = self.client.index(index=self.index_name, id=recipeId, body=doc)
             print(resp['result'])        
 

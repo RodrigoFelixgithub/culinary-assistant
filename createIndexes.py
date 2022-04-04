@@ -30,16 +30,30 @@ class CreateIndexes():
                         "similarity":"BM25"
                     },
                     "sentence_embedding_title": {
-                    "type": "knn_vector",
-                    "model_id": "model_kwiz"
+                        "type":"knn_vector",
+                        "dimension": 768,
+                        "method":{
+                            "name":"hnsw",
+                            "space_type":"innerproduct",
+                            "engine":"faiss",
+                            "parameters":{
+                                "ef_construction":256,
+                                "m":48
+                            }
+                        }
                     },
                     "sentence_embedding_description": {
-                    "type": "knn_vector",
-                    "model_id": "model_kwiz"
-                    },
-                    "sentence_embedding_title_trained": {
-                    "type": "knn_vector",
-                    "model_id": "model_kwiz"
+                        "type":"knn_vector",
+                        "dimension": 768,
+                        "method":{
+                            "name":"hnsw",
+                            "space_type":"innerproduct",
+                            "engine":"faiss",
+                            "parameters":{
+                                "ef_construction":256,
+                                "m":48
+                            }
+                        }
                     }
                 }
             }

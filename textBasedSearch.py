@@ -15,16 +15,16 @@ class TextBasedSearch():
         querytxt = ' '.join([token.lemma_ for token in doc if not token.is_stop and token.is_alpha])
 
         query_bm25 = {
-        'size': 5,
+        'size': 3,
         #  'fields': ['title'],
         #  'fields': ['id', 'contents'],
         #  'fields': ['id', 'contents', 'sentence_embedding'],
-        'fields': ['recipeId', 'recipeTitle', 'recipeDescription'],
+        'fields': ['recipeId', 'title', 'description'],
         '_source': '',
         'query': {
             'multi_match': {
             'query': querytxt,
-            'fields': ['recipeTitle', 'recipeDescription']
+            'fields': ['title', 'description']
             }
         }
         }

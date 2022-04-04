@@ -3,6 +3,8 @@ import pprint as pp
 from pathlib import Path
 import torch
 import torch.nn.functional as F
+import spacy as spacy
+from spacy import displacy
 
 class EmbeddingBasedSearch(): 
     def __init__(self, client, index_name):
@@ -36,19 +38,46 @@ class EmbeddingBasedSearch():
             
     def queryOpenSearch(self, qtxt):
         query_emb = self.encode(qtxt)
+        nlp = spacy.load("en_core_web_sm")
+        doc = nlp(qtxt)
+        querytxt = ' '.join([token.lemma_ for token in doc if not token.is_stop and token.is_alpha])
+
         
+
+
         query_denc = {
-        'size': 5,
+        'size': 3,
         #  '_source': ['doc_id', 'contents', 'sentence_embedding'],
         #  '_source': ['doc_id', 'contents'],
-        '_source': ['doc_id'],
+        '_source': '',
+        'fields': ['recipeId', 'title', 'description'],
         "query": {
-                "knn": {
-                    "sentence_embedding_title": {
-                        "vector": query_emb[0].numpy(),
-                        "k": 2
-                    }
-                }
+                'bool':{
+                    'must':[
+                        {
+                            "knn": {
+                                "sentence_embedding_title": {
+                                    "vector": query_emb[0].numpy(),
+                                    "k": 3
+                                }
+                            }
+                        },
+                        {
+                           "knn": {
+                                "sentence_embedding_description": {
+                                    "vector": query_emb[0].numpy(),
+                                    "k": 3
+                                    }
+                            }
+                        },
+                        {
+                            'multi_match': {
+                            'query': querytxt,
+                            'fields': ['title', 'description']
+                            }
+                        }
+                    ]
+                },
             }
         }
 
