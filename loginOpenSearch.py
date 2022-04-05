@@ -49,10 +49,10 @@ class LoginOpenSearch():
             print('\n----------------------------------------------------------------------------------- INDEX SETTINGS')
             index_settings = {
                 "settings":{
-                "index":{
-                    "refresh_interval" : "1s"
+                    "index":{
+                        "refresh_interval" : "1s"
+                    }
                 }
-            }
             }
             client.indices.put_settings(index = self.index_name, body = index_settings)
             settings = client.indices.get_settings(index = self.index_name)

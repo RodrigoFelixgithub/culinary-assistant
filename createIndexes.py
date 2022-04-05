@@ -54,6 +54,9 @@ class CreateIndexes():
                                 "m":48
                             }
                         }
+                    },
+                    "ingredients":{
+                        "type":"keyword"
                     }
                 }
             }
@@ -63,13 +66,13 @@ class CreateIndexes():
             response = self.client.indices.create(self.index_name, body=index_body)
             print('\nCreating index:')
             print(response)
-
+        
+        self.updateIndexSettings()
         return
 
 
 
     def updateIndexSettings(self):
-        print('\n----------------------------------------------------------------------------------- INDEX SETTINGS')
         index_settings = {
             "settings":{
                 "index":{
@@ -78,12 +81,3 @@ class CreateIndexes():
             }
         }
         self.client.indices.put_settings(index = self.index_name, body = index_settings)
-        settings = self.client.indices.get_settings(index = self.index_name)
-        pp.pprint(settings)
-
-        print('\n----------------------------------------------------------------------------------- INDEX MAPPINGS')
-        mappings = self.client.indices.get_mapping(index = self.index_name)
-        pp.pprint(mappings)
-
-        print('\n----------------------------------------------------------------------------------- INDEX #DOCs')
-        print(self.client.count(index = self.index_name))

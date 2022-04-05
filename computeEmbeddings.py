@@ -4,13 +4,13 @@ import torch.nn.functional as F
 import json as json
 
 class ComputeEmbeddings():
-    def __init__(self, inputFileName, outputFileName):
+    def __init__(self, inputFileName, outputFileName, tokenizer, model):
         self.inputFileName = inputFileName
         self.outputFileName = outputFileName
         
         # Load model from HuggingFace Hub
-        self.tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/msmarco-distilbert-base-v2")
-        self.model = AutoModel.from_pretrained("sentence-transformers/msmarco-distilbert-base-v2")
+        self.tokenizer = tokenizer
+        self.model = model
 
     #Encode text
     def encode(self, texts):

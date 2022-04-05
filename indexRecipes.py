@@ -25,6 +25,7 @@ class IndexRecipes():
             # Tokenization of the recipe title and description, using the recipes file
             recipeTitleDoc = nlp(recipes[recipeId]['recipe']['displayName'])
             recipeTitleString = ' '.join([token.lemma_ for token in recipeTitleDoc if not token.is_stop and token.is_alpha])
+            
             if recipes[recipeId]['recipe']['description'] == None :
                 recipeDescriptionString = None
             else:
@@ -33,6 +34,7 @@ class IndexRecipes():
             
             # Get embeddings from the embeddings file to use in the indexes
             sentence_embedding_title = numpy.asarray(embeddings[recipeId]['title_embedding'])
+            
             if recipeDescriptionString == None :
                 doc = {
                     'recipeId': recipeId,

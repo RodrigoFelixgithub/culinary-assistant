@@ -6,13 +6,13 @@ import torch.nn.functional as F
 import spacy as spacy
 from spacy import displacy
 
-class EmbeddingBasedSearch(): 
-    def __init__(self, client, index_name):
+class Search(): 
+    def __init__(self, client, index_name, tokenizer, model):
         self.client = client
         self.index_name = index_name
         # Load model from HuggingFace Hub
-        self.tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/msmarco-distilbert-base-v2")
-        self.model = AutoModel.from_pretrained("sentence-transformers/msmarco-distilbert-base-v2")
+        self.tokenizer = tokenizer
+        self.model = model
    
     def mean_pooling(self, model_output, attention_mask):
         token_embeddings = model_output.last_hidden_state #First element of model_output contains all token embeddings
@@ -36,17 +36,15 @@ class EmbeddingBasedSearch():
         
         return embeddings
             
-    def queryOpenSearch(self, qtxt):
+    def queryOpenSearch(self, qtxt, nresults):
         query_emb = self.encode(qtxt)
         nlp = spacy.load("en_core_web_sm")
         doc = nlp(qtxt)
         querytxt = ' '.join([token.lemma_ for token in doc if not token.is_stop and token.is_alpha])
 
-        
-
 
         query_denc = {
-        'size': 3,
+        'size': nrequests,
         #  '_source': ['doc_id', 'contents', 'sentence_embedding'],
         #  '_source': ['doc_id', 'contents'],
         '_source': '',
@@ -58,7 +56,7 @@ class EmbeddingBasedSearch():
                             "knn": {
                                 "sentence_embedding_title": {
                                     "vector": query_emb[0].numpy(),
-                                    "k": 3
+                                    "k": nrequests
                                 }
                             }
                         },
@@ -66,7 +64,7 @@ class EmbeddingBasedSearch():
                            "knn": {
                                 "sentence_embedding_description": {
                                     "vector": query_emb[0].numpy(),
-                                    "k": 3
+                                    "k": nrequests
                                     }
                             }
                         },
