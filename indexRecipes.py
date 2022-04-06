@@ -22,6 +22,8 @@ class IndexRecipes():
 
         for recipeId in recipes:
 
+            keywords = recipes[recipeId]['keywords']
+
             ingredients = recipes[recipeId]['recipe']['ingredients']
             ingredientsArray = []
             for i in ingredients:
@@ -46,13 +48,17 @@ class IndexRecipes():
                     'recipeId': recipeId,
                     'title': recipeTitleString,
                     'ingredients': ingredientsArray,
+                    'description': recipeTitleString,
+                    'keywords': keywords,
                     'sentence_embedding_title': sentence_embedding_title,
+                    'sentence_embedding_description': sentence_embedding_title
                 }
             else:
                 doc = {
                     'recipeId': recipeId,
                     'title': recipeTitleString,
                     'ingredients': ingredientsArray,
+                    'keywords': keywords,
                     'description': recipeDescriptionString,
                     'sentence_embedding_title': sentence_embedding_title,
                     'sentence_embedding_description': numpy.asarray(embeddings[recipeId]['description_embedding'])

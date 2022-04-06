@@ -56,6 +56,10 @@ class ComputeEmbeddings():
                 recipeDescription = recipes[recipeId]['recipe']['description']
                 description_emb = self.encode(recipeDescription)
                 embeddings[recipeId]["description_embedding"] = description_emb[0].numpy().tolist()
+            else:
+                recipeDescription = recipes[recipeId]['recipe']['displayName']
+                embeddings[recipeId]["description_embedding"] = title_emb[0].numpy().tolist()
+
             
         # Write to file
         f = open(self.outputFileName, 'w')

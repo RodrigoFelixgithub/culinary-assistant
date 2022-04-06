@@ -60,6 +60,9 @@ class CreateIndexes():
                     },
                     "ingredients":{
                         "type":"keyword"
+                    },
+                    "keywords":{
+                        "type":"keyword"
                     }
                 }
             }
