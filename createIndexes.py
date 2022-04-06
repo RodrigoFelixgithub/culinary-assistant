@@ -21,6 +21,9 @@ class CreateIndexes():
                     "recipeId":{
                         "type":"keyword"
                     },
+                    "ingredients":{
+                        "type":"keyword"
+                    },
                     "title":{
                         "type":"text",
                         "similarity":"BM25"

@@ -35,8 +35,17 @@ class Search():
         embeddings = F.normalize(embeddings, p=2, dim=1)
         
         return embeddings
-            
-    def queryOpenSearch(self, qtxt, nresults):
+
+
+    def filtersfunc(self, ings):
+        ingredients = []
+        if ings is not None:
+            for i in ings:
+                ingredients.append({"term": {"ingredients" : i} })
+                print(i)
+        return ingredients
+
+    def queryOpenSearch(self, qtxt, nresults, ings):
         query_emb = self.encode(qtxt)
         nlp = spacy.load("en_core_web_sm")
         doc = nlp(qtxt)
@@ -44,7 +53,7 @@ class Search():
 
 
         query_denc = {
-        'size': nrequests,
+        'size': nresults,
         #  '_source': ['doc_id', 'contents', 'sentence_embedding'],
         #  '_source': ['doc_id', 'contents'],
         '_source': '',
@@ -56,7 +65,7 @@ class Search():
                             "knn": {
                                 "sentence_embedding_title": {
                                     "vector": query_emb[0].numpy(),
-                                    "k": nrequests
+                                    "k": nresults*100
                                 }
                             }
                         },
@@ -64,7 +73,7 @@ class Search():
                            "knn": {
                                 "sentence_embedding_description": {
                                     "vector": query_emb[0].numpy(),
-                                    "k": nrequests
+                                    "k": nresults*100
                                     }
                             }
                         },
@@ -74,7 +83,12 @@ class Search():
                             'fields': ['title', 'description']
                             }
                         }
-                    ]
+                    ],
+                    "filter": {
+                        'bool': {
+                            'must': self.filtersfunc(ings)
+                        }
+                    }
                 },
             }
         }

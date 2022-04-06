@@ -22,10 +22,16 @@ class IndexRecipes():
 
         for recipeId in recipes:
 
+            ingredients = recipes[recipeId]['recipe']['ingredients']
+            ingredientsArray = []
+            for i in ingredients:
+                ingredient = i['ingredient']
+                ingredientsArray.append(ingredient)
+                
             # Tokenization of the recipe title and description, using the recipes file
             recipeTitleDoc = nlp(recipes[recipeId]['recipe']['displayName'])
             recipeTitleString = ' '.join([token.lemma_ for token in recipeTitleDoc if not token.is_stop and token.is_alpha])
-            
+
             if recipes[recipeId]['recipe']['description'] == None :
                 recipeDescriptionString = None
             else:
@@ -39,12 +45,14 @@ class IndexRecipes():
                 doc = {
                     'recipeId': recipeId,
                     'title': recipeTitleString,
+                    'ingredients': ingredientsArray,
                     'sentence_embedding_title': sentence_embedding_title,
                 }
             else:
                 doc = {
                     'recipeId': recipeId,
                     'title': recipeTitleString,
+                    'ingredients': ingredientsArray,
                     'description': recipeDescriptionString,
                     'sentence_embedding_title': sentence_embedding_title,
                     'sentence_embedding_description': numpy.asarray(embeddings[recipeId]['description_embedding'])
