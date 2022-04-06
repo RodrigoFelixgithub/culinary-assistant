@@ -21,9 +21,6 @@ class CreateIndexes():
                     "recipeId":{
                         "type":"keyword"
                     },
-                    "ingredients":{
-                        "type":"keyword"
-                    },
                     "title":{
                         "type":"text",
                         "similarity":"BM25"
@@ -63,6 +60,9 @@ class CreateIndexes():
                     },
                     "keywords":{
                         "type":"keyword"
+                    },
+                    "time":{
+                        "type":"integer"
                     }
                 }
             }

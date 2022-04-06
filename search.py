@@ -53,10 +53,9 @@ class Search():
         if keys is not None:
             for k in keys:
                 keywords.append({"match": {"keywords": k}})
-                print(k)
         return keywords
 
-    def queryOpenSearch(self, qtxt, nresults, ingsWanted, ingsNotWanted, keywords):
+    def queryOpenSearch(self, qtxt, nresults, ingsWanted, ingsNotWanted, keywords, time):
         query_emb = self.encode(qtxt)
         nlp = spacy.load("en_core_web_sm")
         doc = nlp(qtxt)
@@ -69,7 +68,7 @@ class Search():
             #  '_source': ['doc_id', 'contents', 'sentence_embedding'],
             #  '_source': ['doc_id', 'contents'],
             '_source': '',
-            'fields': ['recipeId', 'title', 'description', 'keywords'],
+            'fields': ['recipeId', 'title', 'description', 'time'],
             "query": {
                 'bool': {
                     'must': [
@@ -96,7 +95,7 @@ class Search():
                             }
                         }
                     ],
-                    'should': self.matchesfunc(keywords),
+                    'should': [*self.matchesfunc(keywords),{"range": { "time" : {"lte" : time}}}],
                     "filter": {
                         'bool': {
                             'must': self.filtersfunc(ingsWanted),
@@ -111,6 +110,7 @@ class Search():
             body=query_denc,
             index=self.index_name
         )
+
 
         print('\nSearch results:')
         pp.pprint(response)

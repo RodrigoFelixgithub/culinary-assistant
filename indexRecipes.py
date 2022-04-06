@@ -24,6 +24,8 @@ class IndexRecipes():
 
             keywords = recipes[recipeId]['keywords']
 
+            time = recipes[recipeId]['recipe']['totalTimeMinutes']
+
             ingredients = recipes[recipeId]['recipe']['ingredients']
             ingredientsArray = []
             for i in ingredients:
@@ -49,6 +51,7 @@ class IndexRecipes():
                     'title': recipeTitleString,
                     'ingredients': ingredientsArray,
                     'description': recipeTitleString,
+                    'time': time,
                     'keywords': keywords,
                     'sentence_embedding_title': sentence_embedding_title,
                     'sentence_embedding_description': sentence_embedding_title
@@ -58,6 +61,7 @@ class IndexRecipes():
                     'recipeId': recipeId,
                     'title': recipeTitleString,
                     'ingredients': ingredientsArray,
+                    'time': time,
                     'keywords': keywords,
                     'description': recipeDescriptionString,
                     'sentence_embedding_title': sentence_embedding_title,
