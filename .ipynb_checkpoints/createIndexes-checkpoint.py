@@ -58,10 +58,7 @@ class CreateIndexes():
                     "ingredients":{
                         "type":"keyword"
                     },
-                    "positive_Keywords":{
-                        "type":"keyword"
-                    },
-                    "negative_Keywords":{
+                    "keywords":{
                         "type":"keyword"
                     },
                     "time":{
