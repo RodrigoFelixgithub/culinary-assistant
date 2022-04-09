@@ -7,7 +7,7 @@ import spacy as spacy
 from spacy import displacy
 
 
-class Search():
+class SearchJson():
     def __init__(self, client, index_name, tokenizer, model):
         self.client = client
         self.index_name = index_name
@@ -55,7 +55,12 @@ class Search():
                 keywords.append({"match": {"keywords": k}})
         return keywords
 
-    def queryOpenSearch(self, qtxt, nresults, ingsWanted, ingsNotWanted, keywords, time):
+    def queryOpenSearch(self, json, nresults, ingsWanted, ingsNotWanted, keywords, time):
+        #for query in querys.keys():
+         #   for i in querys[query]:
+                
+          #      qtxt = query
+           #     answer = i["answer"]
         query_emb = self.encode(qtxt)
         nlp = spacy.load("en_core_web_sm")
         doc = nlp(qtxt)
