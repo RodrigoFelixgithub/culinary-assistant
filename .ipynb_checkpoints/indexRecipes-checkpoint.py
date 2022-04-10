@@ -11,6 +11,14 @@ class IndexRecipes():
         self.client = client
         self.index_name = index_name
 
+    def checkNegative(self, keyword):
+        return "free" in keyword or "no" in keyword
+
+    def cleanNegativeWord(self, keyword):
+        keyword = keyword.replace("free","").strip()
+        keyword = keyword.replace("no ","").strip()
+        return keyword
+
     def indexRecipes(self):
         nlp = spacy.load("en_core_web_sm")
 
@@ -22,7 +30,16 @@ class IndexRecipes():
 
         for recipeId in recipes:
 
-            keywords = recipes[recipeId]['keywords']
+            keywordsPositive = []
+            keywordsNegative = []
+            for keyword in recipes[recipeId]['keywords']:
+                keywordDoc = nlp(keyword)
+                keywordString = ' '.join([token.lemma_ for token in keywordDoc if not token.is_stop and token.is_alpha])
+                if self.checkNegative(keyword):
+                    keywordCleaned = self.cleanNegativeWord(keywordString)
+                    keywordsNegative.append(keywordCleaned)
+                else:
+                    keywordsPositive.append(keywordString)
 
             time = recipes[recipeId]['recipe']['totalTimeMinutes']
 
@@ -52,7 +69,8 @@ class IndexRecipes():
                     'ingredients': ingredientsArray,
                     'description': recipeTitleString,
                     'time': time,
-                    'keywords': keywords,
+                    'positive_Keywords': keywordsPositive,
+                    'negative_Keywords': keywordsNegative,
                     'sentence_embedding_title': sentence_embedding_title,
                     'sentence_embedding_description': sentence_embedding_title
                 }
@@ -62,13 +80,14 @@ class IndexRecipes():
                     'title': recipeTitleString,
                     'ingredients': ingredientsArray,
                     'time': time,
-                    'keywords': keywords,
+                    'positive_Keywords': keywordsPositive,
+                    'negative_Keywords': keywordsNegative,
                     'description': recipeDescriptionString,
                     'sentence_embedding_title': sentence_embedding_title,
                     'sentence_embedding_description': numpy.asarray(embeddings[recipeId]['description_embedding'])
                 }
 
             resp = self.client.index(index=self.index_name, id=recipeId, body=doc)
-            print(resp['result'])        
+            #print(resp['result'])        
 
         return

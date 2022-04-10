@@ -15,8 +15,8 @@ class IndexRecipes():
         return "free" in keyword or "no" in keyword
 
     def cleanNegativeWord(self, keyword):
-        keyword.replace("free","").strip()
-        keyword.replace("no ","").strip()
+        keyword = keyword.replace("free","").strip()
+        keyword = keyword.replace("no ","").strip()
         return keyword
 
     def indexRecipes(self):
@@ -88,6 +88,6 @@ class IndexRecipes():
                 }
 
             resp = self.client.index(index=self.index_name, id=recipeId, body=doc)
-            print(resp['result'])        
+            #print(resp['result'])        
 
         return

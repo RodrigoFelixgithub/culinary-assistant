@@ -70,7 +70,7 @@ class Search():
             rangeArray.append({"range": { "time" : {"lte" : time}}})
         return rangeArray
 
-    def queryOpenSearch(self, qtxt, nresults, ingsWanted, ingsNotWanted, keywordsPositive, keywordsNegative, time, isPrint = True):
+    def queryOpenSearch(self, qtxt, nresults, ingsWanted, ingsNotWanted, keywordsPositive, keywordsNegative, time):
         query_emb = self.encode(qtxt)
         nlp = spacy.load("en_core_web_sm")
         doc = nlp(qtxt)
@@ -109,7 +109,7 @@ class Search():
                             }
                         }
                     ],
-                    'should': [*self.matchesfunc(keywordsPositive, True),*self.matchesfunc(keywordsNegative, True),*self.timeFunc(time)],
+                    'should': [*self.matchesfunc(keywordsPositive, True),*self.matchesfunc(keywordsNegative, False),*self.timeFunc(time)],
                     "filter": {
                         'bool': {
                             'must': self.filtersfunc(ingsWanted),
@@ -126,8 +126,5 @@ class Search():
         )
         
 
-        if isPrint:
-            print('\nSearch results:')
-            pp.pprint(response)
-
+        print('\nSearch results:')
         return response

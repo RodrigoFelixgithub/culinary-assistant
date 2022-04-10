@@ -56,7 +56,7 @@ class SearchJson():
         qmaker = s.Search(self.client, self.index_name, self.tokenizer, self.model)
         for query in annots.keys():
             nresultsaux = int(math.floor(len(positive_annotations[query]))*1.1)
-            res = qmaker.queryOpenSearch(query, nresults, None, None, None, 1000, False)
+            res = qmaker.queryOpenSearch(query, nresults, None, None, None, 1000)
             posit_annotation_copy = self.list_copy(positive_annotations[query])
             no_true_positives_aux = 0
             no_false_positives_aux = 0
