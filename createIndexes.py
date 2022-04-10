@@ -11,7 +11,7 @@ class CreateIndexes():
             "settings":{
                 "index":{
                     "number_of_replicas":0,
-                    "number_of_shards":2,
+                    "number_of_shards":4,
                     "refresh_interval" : "-1",
                     "knn" : "true",
                 },
@@ -37,7 +37,7 @@ class CreateIndexes():
                             "space_type":"innerproduct",
                             "engine":"faiss",
                             "parameters":{
-                                "ef_construction":256,
+                                "ef_construction":384,
                                 "m":48
                             }
                         }
@@ -50,7 +50,7 @@ class CreateIndexes():
                             "space_type":"innerproduct",
                             "engine":"faiss",
                             "parameters":{
-                                "ef_construction":256,
+                                "ef_construction":384,
                                 "m":48
                             }
                         }

@@ -11,6 +11,7 @@ import json as json
 import spacy
 import math
 import numpy
+import time
 
 
 
@@ -36,7 +37,7 @@ class SearchJson():
             aux.append(i)
         return aux
 
-    def searchJson(self, jsonFile, nresults):
+    def searchJson(self, jsonFile):
         positive_annotations = {}
         nlp = spacy.load("en_core_web_sm")
         with open(jsonFile, "r") as read_file:
@@ -54,9 +55,10 @@ class SearchJson():
         no_false_negatives = 0
         
         qmaker = s.Search(self.client, self.index_name, self.tokenizer, self.model)
+        startTime = time.time()
         for query in annots.keys():
-            nresultsaux = int(math.floor(len(positive_annotations[query]))*1.1)
-            res = qmaker.queryOpenSearch(query, nresults, None, None, None, 1000, False)
+            nresultsaux = len(positive_annotations[query])
+            res = qmaker.queryOpenSearch(query, nresultsaux, None, None, None,None, 1000)
             posit_annotation_copy = self.list_copy(positive_annotations[query])
             no_true_positives_aux = 0
             no_false_positives_aux = 0
@@ -68,10 +70,11 @@ class SearchJson():
                         posit_annotation_copy.remove(t)
                 else:
                     no_false_positives_aux += 1
-            no_false_negatives += min(nresults, len(positive_annotations[query])) - no_true_positives_aux - no_false_positives_aux        
+            no_false_negatives += len(posit_annotation_copy)       
             no_true_positives += no_true_positives_aux
             no_false_positives += no_false_positives_aux
+        endTime = time.time()
         precision_score = self.precision_func(no_false_positives, no_true_positives)
         recall_score = self.recall_func(no_false_negatives, no_true_positives)
         f1_score = self.f1_scoreFunc(precision_score, recall_score)
-        print("Precision: " + str(precision_score) +"\nRecall score: " + str(recall_score) + "\nF1 Score: "+ str(f1_score))
+        print("Precision: " + str(precision_score) +"\nRecall score: " + str(recall_score) + "\nF1 Score: "+ str(f1_score) + "\nTime took: "+ str(endTime - startTime))

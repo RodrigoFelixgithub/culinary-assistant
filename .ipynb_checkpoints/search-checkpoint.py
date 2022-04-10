@@ -48,19 +48,33 @@ class Search():
                 ingredients.append({"term": {"ingredients": i}})
         return ingredients
 
-    def matchesfunc(self, keys):
+    def matchesfunc(self, keys, flag):
+        nlp = spacy.load("en_core_web_sm")
         keywords = []
         if keys is not None:
-            for k in keys:
-                keywords.append({"match": {"keywords": k}})
+            if flag:
+                for k in keys:
+                    keywordsPositiveDoc = nlp(k)
+                    keywordsPositiveTxt = ' '.join([token.lemma_ for token in keywordsPositiveDoc if not token.is_stop and token.is_alpha])
+                    keywords.append({"match": {"positive_Keywords": keywordsPositiveTxt}})
+            else:
+                for k in keys:
+                    keywordsNegativeDoc = nlp(k)
+                    keywordsNegativeTxt = ' '.join([token.lemma_ for token in keywordsNegativeDoc if not token.is_stop and token.is_alpha])
+                    keywords.append({"match": {"negative_Keywords": keywordsNegativeTxt}})
         return keywords
 
-    def queryOpenSearch(self, qtxt, nresults, ingsWanted, ingsNotWanted, keywords, time, isPrint = True):
+    def timeFunc(self, time):
+        rangeArray = []
+        if time is not None:
+            rangeArray.append({"range": { "time" : {"lte" : time}}})
+        return rangeArray
+
+    def queryOpenSearch(self, qtxt, nresults, ingsWanted, ingsNotWanted, keywordsPositive, keywordsNegative, time):
         query_emb = self.encode(qtxt)
         nlp = spacy.load("en_core_web_sm")
         doc = nlp(qtxt)
-        querytxt = ' '.join(
-            [token.lemma_ for token in doc if not token.is_stop and token.is_alpha])
+        querytxt = ' '.join([token.lemma_ for token in doc if not token.is_stop and token.is_alpha])
         K_TRESHOLD = 10
 
         query_denc = {
@@ -68,7 +82,7 @@ class Search():
             #  '_source': ['doc_id', 'contents', 'sentence_embedding'],
             #  '_source': ['doc_id', 'contents'],
             '_source': '',
-            'fields': ['recipeId', 'title', 'description', 'time'],
+            'fields': ['recipeId', 'title', 'description', 'negative_Keywords'],
             "query": {
                 'bool': {
                     'must': [
@@ -95,7 +109,7 @@ class Search():
                             }
                         }
                     ],
-                    'should': [*self.matchesfunc(keywords),{"range": { "time" : {"lte" : time}}}],
+                    'should': [*self.matchesfunc(keywordsPositive, True),*self.matchesfunc(keywordsNegative, False),*self.timeFunc(time)],
                     "filter": {
                         'bool': {
                             'must': self.filtersfunc(ingsWanted),
@@ -111,9 +125,4 @@ class Search():
             index=self.index_name
         )
         
-
-        if isPrint:
-            print('\nSearch results:')
-            pp.pprint(response)
-
         return response

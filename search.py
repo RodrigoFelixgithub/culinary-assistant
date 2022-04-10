@@ -125,6 +125,4 @@ class Search():
             index=self.index_name
         )
         
-
-        print('\nSearch results:')
         return response
