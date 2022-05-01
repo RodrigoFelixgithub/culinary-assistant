@@ -12,5 +12,5 @@ class ComputeMatrix():
             imageEmbeddings=pickle.load(read_file)
         with open(self.noImageEmbeddingsfile + '.pickle', "rb") as read_file:
             noImageEmbeddings=pickle.load(read_file)
-        matrix = np.dot(noImageEmbeddings, np.transpose(imageEmbeddings))
+        matrix = np.matmul(noImageEmbeddings, np.transpose(imageEmbeddings))
         return matrix

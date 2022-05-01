@@ -48,7 +48,6 @@ class ComputeImagesEmbeddings():
         imageEmbeddings = []
         noImageEmbeddings = []
 
-
         for step in imagesFile:
             imageEmbeddings.append(self.encode(step['description'])[0].numpy()) 
             
