@@ -1,66 +1,55 @@
 import pickle
-from transformers import AutoTokenizer, AutoModel
+from transformers import CLIPProcessor, CLIPModel
 import torch
 import torch.nn.functional as F
 import json as json
+from PIL import Image
 
 class ComputeImagesEmbeddings():
-    def __init__(self, inputFileNameImages, inputFileNameNoImages, outputFileNameImages, outputFileNameNoImages, tokenizer, model):
+    def __init__(self, inputFileNameImages, inputFileNameNoImages, outputFileNameImages, outputFileNameNoImages, imageFolder):
         self.inputFileNameImages = inputFileNameImages
         self.inputFileNameNoImages = inputFileNameNoImages
         self.outputFileNameImages = outputFileNameImages
         self.outputFileNameNoImages = outputFileNameNoImages
-        
-        # Load model from HuggingFace Hub
-        self.tokenizer = tokenizer
-        self.model = model
-
-    #Encode text
-    def encode(self, texts):
-        # Tokenize sentences
-        encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors='pt')
-
-        # Compute token embeddings
-        with torch.no_grad():
-            model_output = self.model(**encoded_input, return_dict=True)
-        
-        # Perform pooling
-        embeddings = self.mean_pooling(model_output, encoded_input['attention_mask'])
-
-        # Normalize embeddings
-        embeddings = F.normalize(embeddings, p=2, dim=1)
-        
-        return embeddings
+        self.imageFolder = imageFolder
 
         
-    #Mean Pooling - Take average of all tokens
-    def mean_pooling(self, model_output, attention_mask):
-        token_embeddings = model_output.last_hidden_state #First element of model_output contains all token embeddings
-        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(self.device)
+        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+        
 
     def createMap(self):
         with open(self.inputFileNameImages, "r") as read_images_file:
             imagesFile = json.load(read_images_file)
         with open(self.inputFileNameNoImages, "r") as read_noimages_file:
             noImagesFile = json.load(read_noimages_file)
-
-        imageEmbeddings = []
-        noImageEmbeddings = []
-
-        for step in imagesFile:
-            imageEmbeddings.append(self.encode(step['description'])[0].numpy()) 
+  
+        steps = []
+        images = []
+        for i,imageobj in enumerate(imagesFile):
+            image = Image.open(self.imageFolder + str(i) + '.jpg').convert('RGB')
+            images.append(image)
             
         for step in noImagesFile:
-            noImageEmbeddings.append(self.encode(step['description'])[0].numpy())
-          
+            steps.append(step['description'])
+
+        imageInput = self.processor(images=images, return_tensors="pt", padding=True).to(self.device)
+        imageInputEmbedding = self.model.get_image_features(**imageInput)
+        imageInputEmbedding = F.normalize(imageInputEmbedding, p=2, dim=1)
+        imageInputEmbedding =imageInputEmbedding.detach().cpu().numpy()
+
+        textInput = self.processor(text=steps, return_tensors="pt", padding=True, truncation = True).to(self.device)
+        textInputEmbedding = self.model.get_text_features(**textInput)
+        textInputEmbedding = F.normalize(textInputEmbedding, p=2, dim=1) 
+        textInputEmbedding = textInputEmbedding.detach().cpu().numpy() 
             
         # Write to file
         with open(self.outputFileNameImages + '.pickle', 'wb') as f:
-            pickle.dump(imageEmbeddings, f)
+            pickle.dump(imageInputEmbedding, f)
 
         with open(self.outputFileNameNoImages + '.pickle', 'wb') as f:
-            pickle.dump(noImageEmbeddings, f)
+            pickle.dump(textInputEmbedding, f)
 
         return
     

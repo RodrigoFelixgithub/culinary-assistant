@@ -19,7 +19,6 @@ class ComputeClipOutput():
         self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
     def getImage(self):
-        nlp = spacy.load("en_core_web_sm")
         with open(self.imagefile, "r") as read_images_file:
             imagesFile = json.load(read_images_file)
         with open(self.noImagefile, "r") as read_no_images_file:
