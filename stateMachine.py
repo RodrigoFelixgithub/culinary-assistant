@@ -1,4 +1,7 @@
 from transitions import Machine
+import json
+from IPython.display import Image, HTML, display
+
 
 class StateMachine():
 
@@ -10,6 +13,7 @@ class StateMachine():
     currentStep = 0
     keywords = ''
     time_restriction = -1
+    recipesarray = []
     
     states = [
         { 'name': 'dummy'},
@@ -22,17 +26,20 @@ class StateMachine():
         { 'name': 'skipIngredientsState', 'on_enter': ['ask_skip_ingredients']},
         { 'name': 'show_ingredients', 'on_enter': ['show_ingredientsFunc']},
         { 'name': 'show_steps', 'on_enter': ['show_stepsFunc']},
-        { 'name': 'end', 'on_enter': ['greetingFunc']}
+        { 'name': 'end', 'on_enter': ['endFunc']}
     ]
     
 
 
-    def __init__(self, tokenizer, model, all_intents):
+    def __init__(self, tokenizer, model, all_intents, searchEngine):
         self.machine = Machine(model=self, states=self.states, initial='dummy')
         self.model = model
         self.tokenizer = tokenizer
         self.all_intents = all_intents
+        self.searchEngine = searchEngine
 
+        with open('../jsonData/recipesMapWithImages.json', "r") as read_file:
+            self.recipesMap = json.load(read_file)
 
         # self.machine.add_transition(trigger='nomeDaTransicao_funcaoTransicao', source='estadoOrigem',
         # dest='estadoPosTransicao', before='funcaoAExecutarAntesDaTransicao', after='funcaoAExecutarDepoisDaTransicao',
@@ -125,7 +132,7 @@ class StateMachine():
     
 #unwanted ings functions
     def ask_for_unwanted_ingredientsFunc(self): 
-        print('Are there any ingredients you\'d rather not have in the recipe? If so, could you also enumerate them?')
+        print('Are there any ingredients you really don\'t want in the recipe? If so, could you also enumerate them?')
 
     def define_unwanted_ingredients(self):   
         self.unwanted_ingredients = self.response.split() 
@@ -137,7 +144,7 @@ class StateMachine():
         if(self.unwanted_ingredients == ''):
             print('I see, then I\'ll have no need to avoid any unwanted ingredients!')
         else:
-            print('Got it, I\'ll try to find recipes which don\'t contain any '+ ', '.join(self.unwanted_ingredients) + '.') #todo mudar isto para fazer tomates, batatas e couves em vez de tomates, batatas, couves
+            print('Got it, I\'ll find recipes which don\'t contain any '+ ', '.join(self.unwanted_ingredients) + '.') #todo mudar isto para fazer tomates, batatas e couves em vez de tomates, batatas, couves
         
 
 
@@ -164,6 +171,7 @@ class StateMachine():
 
     def define_time_restrictions(self):
         self.time_restriction = [int(i) for i in self.response.split() if i.isdigit()][0] #tempo em minutos #TODO meter isto a ir buscar bem o tempo
+        
 
     def get_time_restrictions(self):
         return self.time_restriction
@@ -176,18 +184,29 @@ class StateMachine():
 
 #top5 recipes funcs
     def show_top_recipesFunc(self):
-        print('Done! I have found 5 recipes that best fit your description.')
-        #show recipes
+        #myjson = self.searchEngine.queryOpenSearch('Holiday Salad', 10,None, None, ["salads"], ["lupine"], None)
+        myjson=self.searchEngine.queryOpenSearch(self.recipe, 6, self.desired_ingredients, self.unwanted_ingredients, self.keywords, None, self.time_restriction)
+        self.recipesarray = [recipe['fields']['recipeId'][0] for recipe in myjson['hits']['hits']]
+        print('Done! I have found some recipes that fit your description.')
+        for i in self.recipesarray:         #show recipes
+            title = self.recipesMap[i]['recipe']['displayName']
+            img = self.recipesMap[i]['recipe']['images'][0]['url']
+            totalTime = str(self.recipesMap[i]['recipe']['totalTimeMinutes']) + ' minutes' if self.recipesMap[i]['recipe']['totalTimeMinutes'] != None else '-'
+            rating = str(self.recipesMap[i]['rating']['ratingValue']) + '/5' if self.recipesMap[i]['rating'] != None else '-'
+            displayResults(title,img,totalTime,rating)    
+
         print('Which one would you like to see?')
     
     def define_chosen_recipe(self):
-        self.chosen_recipe = [int(i) for i in self.response.split() if i.isdigit()][0] 
+
+        recipenumber = [int(i) for i in self.response.split() if i.isdigit()][0] 
+        self.chosen_recipe = self.recipesarray[recipenumber-1]
 
     def get_chosen_recipe(self):
         return self.chosen_recipe
 
     def exit_show_top_recipesFunc(self): 
-        print('You picked ' + str(self.chosen_recipe) + '. Great choice!')
+        print('You picked ' + self.recipesMap[self.chosen_recipe]['recipe']['displayName'] + '. Great choice!')
 
 
 #skipingredientsstate
@@ -205,14 +224,30 @@ class StateMachine():
     def show_stepsFunc(self):
         if(self.currentStep == 0): print('Ok! Let\'s begin!')
         print('Step n : _')
-        #show step
+        #display(HTML(f"""
+            #<div class ="row" style="margin-left:100px">
+                #<img src="{img}" class="img-responsive" width="80px">
+                #Step {n} : {text} <br>
+            #</div>
+        #"""))
 
     def endFunc(self): print('Now that you\'ve finished cooking you can finally enjoy your meal! Bon appétit!')
 
 
 
-
-
+def displayResults(title, img, totalTime, rating):
+    display(HTML(f"""
+        <div class="row" style="display: flex; align-items: center; border-style: double;">
+            <div class="column">
+                <img src={img} style="width:200px; margin-right:20px"/>
+            </div>
+            <div class="column">
+                <div class="row"><b>{title}</b> </div>
+                <div class="row">Preparation time: {totalTime}</div>
+                <div class="row">Rating: {rating}</div>
+            </div>
+        </div>
+    """))
 
 
 
