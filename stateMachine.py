@@ -90,15 +90,21 @@ class StateMachine():
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
         self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
 
+
         #show_top_recipes
         self.machine.add_transition(trigger='QuestionIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
+        self.machine.add_transition(trigger='AMAZON.SelectIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
+        self.machine.add_transition(trigger='IdentifyProcessIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
 
-        #show_ingredients
+
+        #show_ingredients / skip ings
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='skipIngredientsState', dest='show_ingredients')
-        #show_steps
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='show_ingredients', dest='show_steps')
         self.machine.add_transition(trigger='AMAZON.NoIntent', source='skipIngredientsState', dest='show_steps')
         
+        #show_steps
+        self.machine.add_transition(trigger='AMAZON.YesIntent', source='show_steps', dest='end', conditions=['last_step'])
+        self.machine.add_transition(trigger='AMAZON.YesIntent', source='show_steps', dest='', before='define_next_step')
 
     
 
@@ -250,15 +256,33 @@ class StateMachine():
         print('Which one would you like to see?')
     
     def define_chosen_recipe(self):
+        myjson = self.qaExtractor.extractAnswer('Which one would you like to see?', self.userResponse)
 
-        recipenumber = [int(i) for i in self.userResponse.split() if i.isdigit()][0] 
-        self.chosen_recipe = self.recipesarray[recipenumber-1]
+        self.chosen_recipe = self.extractChosenRecipe(self.recipesarray, myjson['answer'])
+
+        #[int(i) for i in self.userResponse.split() if i.isdigit()][0] 
+        #self.chosen_recipe = self.recipesarray[recipenumber-1]
 
     def get_chosen_recipe(self):
         return self.chosen_recipe
 
     def exit_show_top_recipesFunc(self): 
         print('You picked ' + self.recipesMap[self.chosen_recipe]['recipe']['displayName'] + '. Great choice!')
+
+    def extractChosenRecipe(self, recipes, answer):
+        length = len(recipes)
+        if(length > 0 and any(s in answer for s in ['first', '1', 'one', self.recipesMap[recipes[0]]['recipe']['displayName']])) :
+            return recipes[0]
+        elif(length > 1 and any(s in answer for s in ['second', '2', 'two', self.recipesMap[recipes[1]]['recipe']['displayName']])) :
+            return recipes[1]
+        elif(length > 2 and any(s in answer for s in ['third', '3', 'three', self.recipesMap[recipes[2]]['recipe']['displayName']])) :
+            return recipes[2]
+        elif(length > 3 and any(s in answer for s in ['fourth', '4', 'four', self.recipesMap[recipes[3]]['recipe']['displayName']])) :
+            return recipes[3]
+        elif(length > 4 and any(s in answer for s in ['fifth', '5', 'five', self.recipesMap[recipes[4]]['recipe']['displayName']])) :
+            return recipes[4]
+        else:
+            return -1
 
 
 #skipingredientsstate
@@ -269,11 +293,15 @@ class StateMachine():
     def show_ingredientsFunc(self):
         print('For this recipe you\'ll need the following ingredients:')
         #show ingredients
+        ingredients = self.recipesMap[self.chosen_recipe]['recipe']['ingredients']
+        # para ver o displayText fazer ingredients['displayText'] 
+        #para ver o actual nome do ingrediente fazer ingredients['ingredient']  
         print('Are you ready to start cooking?')
     
 
 #show steps func
     def show_stepsFunc(self):
+        step = self.recipesMap[self.chosen_recipe]['recipe']['instructions'][self.currentStep]
         if(self.currentStep == 0): print('Ok! Let\'s begin!')
         print('Step n : _')
         #display(HTML(f"""
@@ -282,6 +310,9 @@ class StateMachine():
                 #Step {n} : {text} <br>
             #</div>
         #"""))
+        
+    def define_next_step(self):
+        self.currentStep = self.currentStep + 1
 
     def endFunc(self): print('Now that you\'ve finished cooking you can finally enjoy your meal! Bon appétit!')
 
@@ -293,7 +324,9 @@ class StateMachine():
         keyword = keyword.replace("no ","").strip()
         return keyword
 
-
+    @property
+    def last_step(self):
+        return self.currentStep == len(self.recipesMap[self.chosen_recipe]['recipe']['instructions']-1)
 
 
 def displayResults(title, img, totalTime, rating):
@@ -340,6 +373,8 @@ def text2int(textnum, numwords={}):
             current = 0
 
     return result + current
+
+
 
 
 
