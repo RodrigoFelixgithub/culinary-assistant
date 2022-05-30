@@ -1,20 +1,14 @@
+from urllib import response
 from transitions import Machine
 import json
 from IPython.display import Image, HTML, display
+import spacy as spacy
+from spacy import displacy
+
 
 
 class StateMachine():
 
-    response = ''
-    recipe = ''
-    desired_ingredients = ''
-    unwanted_ingredients = ''
-    chosen_recipe = -1
-    currentStep = 0
-    keywords = ''
-    time_restriction = -1
-    recipesarray = []
-    
     states = [
         { 'name': 'dummy'},
         { 'name': 'greeting', 'on_enter': ['greetingFunc'], 'on_exit': ['exitGreetingFunc']},
@@ -31,12 +25,27 @@ class StateMachine():
     
 
 
-    def __init__(self, tokenizer, model, all_intents, searchEngine):
+    def __init__(self, tokenizer, model, all_intents, searchEngine, qaExtractor):
         self.machine = Machine(model=self, states=self.states, initial='dummy')
         self.model = model
         self.tokenizer = tokenizer
         self.all_intents = all_intents
         self.searchEngine = searchEngine
+        self.qaExtractor = qaExtractor
+
+        self.userResponse = ''
+        self.recipe = ''
+        self.desired_ingredients = []
+        self.unwanted_ingredients = []
+        self.chosen_recipe = -1
+        self.currentStep = 0
+        self.keywords = []
+        self.time_restriction = -1
+        self.recipesarray = []
+        self.keywordsPositive = []
+        self.keywordsNegative = []
+
+        self.nlp = spacy.load("en_core_web_sm")
 
         with open('../jsonData/recipesMapWithImages.json', "r") as read_file:
             self.recipesMap = json.load(read_file)
@@ -51,11 +60,14 @@ class StateMachine():
 
         #greeting
         self.machine.add_transition(trigger='IdentifyProcessIntent', source='greeting', dest='ask_for_desired_ingredients', before = 'defineRecipe')
+        self.machine.add_transition(trigger='AMAZON.YesIntent', source='greeting', dest='ask_for_desired_ingredients', before='defineRecipe')
 
         #ask_for_desired_ingredients
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
         self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
         self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients')
+        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
+
 
         #ask_for_unwanted_ingredients
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
@@ -63,6 +75,8 @@ class StateMachine():
         self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
         self.machine.add_transition(trigger='QuestionIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
         self.machine.add_transition(trigger='NextStepIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
+        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
+
 
         #ask_for_keywords
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
@@ -72,8 +86,9 @@ class StateMachine():
         self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_keywords', dest='ask_for_time_restrictions')
 
         #ask_for_time_restrictions
-        self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
+        self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_time_restrictions', dest='show_top_recipes')
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
+        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
 
         #show_top_recipes
         self.machine.add_transition(trigger='QuestionIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
@@ -95,8 +110,8 @@ class StateMachine():
         idx = logits.argmax(-1).item()
         return self.all_intents[idx]
 
-    def setResponse(self,response):
-        self.response = response
+    def setUserResponse(self,userResponse):
+        self.userResponse = userResponse
 
 
 
@@ -104,9 +119,10 @@ class StateMachine():
     def greetingFunc(self):
         print('Hello! I\'m a cooking assistant and I\'m here to help you cook anything you want. What would you like to prepare today?')
     
-    def defineRecipe(self): #TODO make the code
-        words = self.response.split()
-        self.recipe = words[-1]
+    def defineRecipe(self): 
+        myjson = self.qaExtractor.extractAnswer('Hello! I\'m a cooking assistant and I\'m here to help you cook anything you want. What would you like to prepare today?', self.userResponse)
+        self.recipe = myjson['answer']
+        print(self.recipe)
 
     def exitGreetingFunc(self): 
         print('Ok! I\'ll now ask you some questions to find the '+ self.recipe +' recipe you\'re looking for!')
@@ -117,8 +133,14 @@ class StateMachine():
         print('Are there any desired ingredients you\'d like the recipe to have? If so, could you enumerate them?')
 
     def define_desired_ingredients(self):
-        self.desired_ingredients = self.response.split()
-    
+        myjson = self.qaExtractor.extractAnswer('Are there any desired ingredients you\'d like the recipe to have? If so, could you enumerate them?', self.userResponse)
+        doc = self.nlp(myjson['answer'])
+        for token in doc:
+            if (not token.is_stop) and token.is_alpha and (token.pos_ == 'NOUN'):
+                self.desired_ingredients.append(token.text)
+        #self.desired_ingredients = ' '.join([token.text for token in doc if (not token.is_stop) and token.is_alpha and (token.pos_ == 'NOUN')])
+        print(self.desired_ingredients)
+
     def get_desired_ingredients(self):
         return self.desired_ingredients
 
@@ -128,14 +150,18 @@ class StateMachine():
         else:
             print('Ok, I\'ll take '+ ', '.join(self.desired_ingredients) + ' in consideration.') #todo mudar isto para fazer tomates, batatas e couves em vez de tomates, batatas, couves
 
-
     
 #unwanted ings functions
     def ask_for_unwanted_ingredientsFunc(self): 
         print('Are there any ingredients you really don\'t want in the recipe? If so, could you also enumerate them?')
 
     def define_unwanted_ingredients(self):   
-        self.unwanted_ingredients = self.response.split() 
+        myjson = self.qaExtractor.extractAnswer('Are there any ingredients you really don\'t want in the recipe? If so, could you also enumerate them?', self.userResponse)
+        doc = self.nlp(myjson['answer'])
+        for token in doc:
+            if (not token.is_stop) and token.is_alpha and (token.pos_ == 'NOUN'):
+                self.unwanted_ingredients.append(token.text)
+        print(self.unwanted_ingredients)
 
     def get_unwanted_ingredients(self):    
         return self.unwanted_ingredients
@@ -153,13 +179,35 @@ class StateMachine():
         print('Should the recipe follow any dietary requirements?\nFor example, does it need to be vegan or gluten-free?')
     
     def define_keywords(self):
-        self.keywords = self.response.split() 
+        myjson = self.qaExtractor.extractAnswer('Should the recipe follow any dietary requirements?\nFor example, does it need to be vegan or gluten-free?', self.userResponse)
+        print(myjson['answer'])
+        array = myjson['answer'].split()
+        doc = self.nlp(myjson['answer'])
+        for token in doc:
+            if(token.is_stop):
+                array.remove(token.text)
+        
+
+        for keyword in array:
+            keywordDoc = self.nlp(keyword)
+            keywordString = ' '.join([token.lemma_ for token in keywordDoc if not token.is_stop and token.is_alpha])
+            if self.checkNegative(keyword):
+                keywordCleaned = self.cleanNegativeWord(keywordString)
+                self.keywordsNegative.append(keywordCleaned)
+            else:
+                self.keywordsPositive.append(keywordString)
+
+
+        self.keywords = array
+        print('keywords: ' + str(self.keywords))
+        print('keywordsNegative: ' + str(self.keywordsNegative))
+        print('keywordsPositive: ' + str(self.keywordsPositive))
 
     def get_keywords(self):
         return self.keywords
         
     def exit_ask_for_keywordsFunc(self): 
-        if(self.keywords == ''):
+        if(len(self.keywords)==0):
             print('Understood! I won\'t factor in any dietary requirements.')
         else:
             print('Ok, I\'ll prioritize recipes that have '+ ', '.join(self.keywords) + ' requirements.') #todo mudar isto para fazer tomates, batatas e couves em vez de tomates, batatas, couves        
@@ -167,11 +215,15 @@ class StateMachine():
         
 #time restriction funcs
     def ask_for_time_restrictionsFunc(self): 
-        print('Last question! Are there any time restrictions for the food preparation? If so, how long would you like it to take?')
+        print('Last question! Are there any time restrictions for the food preparation? If so, how many minutes would you like it to take?')
 
     def define_time_restrictions(self):
-        self.time_restriction = [int(i) for i in self.response.split() if i.isdigit()][0] #tempo em minutos #TODO meter isto a ir buscar bem o tempo
-        
+        array = self.userResponse.split()
+        self.time_restriction = [int(i) for i in array if i.isdigit()]
+        if (len(self.time_restriction)>0): self.time_restriction = self.time_restriction[0]
+        else: self.time_restriction = text2int(array[array.index('minutes') - 1])
+        print(self.time_restriction)
+  
 
     def get_time_restrictions(self):
         return self.time_restriction
@@ -180,12 +232,12 @@ class StateMachine():
         if(self.time_restriction == -1):
             print('Very well, I won\'t take any time restriction into consideration.')
         else:
-            print('Noted, I\'ll look for recipes that take less then '+ str(self.time_restriction) + ' minutes.') #todo mudar isto para fazer tomates, batatas e couves em vez de tomates, batatas, couves        
+            print('Noted, I\'ll try to look for recipes that take less then '+ str(self.time_restriction) + ' minutes.') #todo mudar isto para fazer tomates, batatas e couves em vez de tomates, batatas, couves        
 
 #top5 recipes funcs
     def show_top_recipesFunc(self):
         #myjson = self.searchEngine.queryOpenSearch('Holiday Salad', 10,None, None, ["salads"], ["lupine"], None)
-        myjson=self.searchEngine.queryOpenSearch(self.recipe, 6, self.desired_ingredients, self.unwanted_ingredients, self.keywords, None, self.time_restriction)
+        myjson=self.searchEngine.queryOpenSearch(self.recipe, 5, self.desired_ingredients, self.unwanted_ingredients, self.keywordsPositive, self.keywordsNegative, self.time_restriction)
         self.recipesarray = [recipe['fields']['recipeId'][0] for recipe in myjson['hits']['hits']]
         print('Done! I have found some recipes that fit your description.')
         for i in self.recipesarray:         #show recipes
@@ -199,7 +251,7 @@ class StateMachine():
     
     def define_chosen_recipe(self):
 
-        recipenumber = [int(i) for i in self.response.split() if i.isdigit()][0] 
+        recipenumber = [int(i) for i in self.userResponse.split() if i.isdigit()][0] 
         self.chosen_recipe = self.recipesarray[recipenumber-1]
 
     def get_chosen_recipe(self):
@@ -233,6 +285,15 @@ class StateMachine():
 
     def endFunc(self): print('Now that you\'ve finished cooking you can finally enjoy your meal! Bon appétit!')
 
+    def checkNegative(self, keyword):
+        return "free" in keyword or "no" in keyword
+
+    def cleanNegativeWord(self, keyword):
+        keyword = keyword.replace("free","").strip()
+        keyword = keyword.replace("no ","").strip()
+        return keyword
+
+
 
 
 def displayResults(title, img, totalTime, rating):
@@ -249,6 +310,36 @@ def displayResults(title, img, totalTime, rating):
         </div>
     """))
 
+
+def text2int(textnum, numwords={}):
+    if not numwords:
+      units = [
+        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+        "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+        "sixteen", "seventeen", "eighteen", "nineteen",
+      ]
+
+      tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+      scales = ["hundred", "thousand", "million", "billion", "trillion"]
+
+      numwords["and"] = (1, 0)
+      for idx, word in enumerate(units):    numwords[word] = (1, idx)
+      for idx, word in enumerate(tens):     numwords[word] = (1, idx * 10)
+      for idx, word in enumerate(scales):   numwords[word] = (10 ** (idx * 3 or 2), 0)
+
+    current = result = 0
+    for word in textnum.split():
+        if word not in numwords:
+          raise Exception("Illegal word: " + word)
+
+        scale, increment = numwords[word]
+        current = current * scale + increment
+        if scale > 100:
+            result += current
+            current = 0
+
+    return result + current
 
 
 
