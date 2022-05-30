@@ -109,10 +109,10 @@ class Search():
                             }
                         }
                     ],
-                    'should': [*self.matchesfunc(keywordsPositive, True),*self.matchesfunc(keywordsNegative, False),*self.timeFunc(time)],
+                    'should': [*self.matchesfunc(keywordsPositive, True),*self.matchesfunc(keywordsNegative, False),*self.timeFunc(time), *self.filtersfunc(ingsWanted)],
                     "filter": {
                         'bool': {
-                            'must': self.filtersfunc(ingsWanted),
+                            #'must': ,
                             'must_not': self.filtersfunc(ingsNotWanted),
                         }
                     }
