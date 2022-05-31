@@ -511,14 +511,12 @@ def displayIngredients(ingredients):
 
 def displayStep(img, number, title, description):
     display(HTML(f"""
-        <div style="display: flex; align-items: center; border-style: double;">
-            <div>
-                <img src={img} style="width:200px; margin-right:20px"/>
-            </div>
-            <div>
-                <div><b>Step {number}: {title}</b> </div>
-                <div>{description}</div>
-            </div>
+        <div style="text-align:center; align-items: center; border-style: double;">
+            <div><b>Step {number}: {title}</b> </div>
+            <div>{description}</div>
+            <div style="height:10px;"></div>
+            <img src={img} style="width:200px; margin-right:20px; border-style: solid; border-radius: 20px; border-width: 1px;"/>
+            <div style="height:10px;"></div>
         </div>
     """))
 
