@@ -33,6 +33,7 @@ class StateMachine():
         self.searchEngine = searchEngine
         self.qaExtractor = qaExtractor
 
+        self.botQuestion = ''
         self.userResponse = ''
         self.recipe = ''
         self.desired_ingredients = []
@@ -163,10 +164,11 @@ class StateMachine():
 #greeting functions
     def greetingFunc(self):
         self.recipe = ''
-        print('Hello! I\'m a cooking assistant and I\'m here to help you cook anything you want. What would you like to prepare today?')
+        self.botQuestion = 'Hello! I\'m a cooking assistant and I\'m here to help you cook anything you want. What would you like to prepare today?'
+        print(self.botQuestion)
     
     def defineRecipe(self): 
-        myjson = self.qaExtractor.extractAnswer('Hello! I\'m a cooking assistant and I\'m here to help you cook anything you want. What would you like to prepare today?', self.userResponse)
+        myjson = self.qaExtractor.extractAnswer(self.botQuestion, self.userResponse)
         self.recipe = myjson['answer']
         #print(self.recipe)
     
@@ -180,10 +182,11 @@ class StateMachine():
 #desired ings functions
     def ask_for_desired_ingredientsFunc(self):
         self.desired_ingredients = []
-        print('Are there any desired ingredients you\'d like the recipe to have? If so, could you enumerate them?')
+        self.botQuestion = 'Are there any desired ingredients you\'d like the recipe to have? If so, could you enumerate them?'
+        print(self.botQuestion)
 
     def define_desired_ingredients(self):
-        myjson = self.qaExtractor.extractAnswer('Are there any desired ingredients you\'d like the recipe to have? If so, could you enumerate them?', self.userResponse)
+        myjson = self.qaExtractor.extractAnswer(self.botQuestion, self.userResponse)
         #print(myjson['score'])
         if myjson['score'] < 0.0001 :
             raise Exception("Illegal score: " + str(myjson['score']))
@@ -216,10 +219,12 @@ class StateMachine():
 #unwanted ings functions
     def ask_for_unwanted_ingredientsFunc(self): 
         self.unwanted_ingredients = []
-        print('Are there any ingredients you really don\'t want in the recipe? If so, could you also enumerate them?')
+        self.botQuestion = 'Are there any ingredients you really don\'t want in the recipe? If so, could you also enumerate them?'
+        print(self.botQuestion)
+        
 
     def define_unwanted_ingredients(self):   
-        myjson = self.qaExtractor.extractAnswer('Are there any ingredients you really don\'t want in the recipe? If so, could you also enumerate them?', self.userResponse)
+        myjson = self.qaExtractor.extractAnswer(self.botQuestion, self.userResponse)
         #(myjson['score'])
         if myjson['score'] < 0.0001 :
             raise Exception("Illegal score: " + str(myjson['score']))
@@ -250,10 +255,11 @@ class StateMachine():
 #keywords functions
     def ask_for_keywordsFunc(self): 
         self.keywords = []
-        print('Should the recipe follow any dietary requirements?\nFor example, does it need to be vegan or gluten-free?')
-    
+        self.botQuestion = 'Should the recipe follow any dietary requirements?\nFor example, does it need to be vegan or gluten-free?'
+        print(self.botQuestion)
+
     def define_keywords(self):
-        myjson = self.qaExtractor.extractAnswer('Should the recipe follow any dietary requirements?\nFor example, does it need to be vegan or gluten-free?', self.userResponse)
+        myjson = self.qaExtractor.extractAnswer(self.botQuestion, self.userResponse)
         if myjson['score'] < 0.0001 :
             raise Exception("Illegal score: " + str(myjson['score']))
         sentence = myjson['answer'].strip(",.:;")
@@ -299,7 +305,8 @@ class StateMachine():
 #time restriction funcs
     def ask_for_time_restrictionsFunc(self): 
         self.time_restriction = -1
-        print('Last question! Are there any time restrictions for the food preparation? If so, how many minutes would you like it to take?')
+        self.botQuestion = 'Last question! Are there any time restrictions for the food preparation? If so, how many minutes would you like it to take?'
+        print(self.botQuestion)
 
     def define_time_restrictions(self):
         array = self.userResponse.split()
@@ -326,7 +333,7 @@ class StateMachine():
         #myjson = self.searchEngine.queryOpenSearch('Holiday Salad', 10,None, None, ["salads"], ["lupine"], None)
         myjson=self.searchEngine.queryOpenSearch(self.recipe, 5, self.desired_ingredients, self.unwanted_ingredients, self.keywordsPositive, self.keywordsNegative, self.time_restriction)
         self.recipesarray = [recipe['fields']['recipeId'][0] for recipe in myjson['hits']['hits']]
-        if len(self.recipesarray) == 0: print('sorry but none of my recipes match your description')
+        if len(self.recipesarray) == 0: print('Sorry but none of my recipes match your description.')
         else: 
             print('Done! I have found some recipes that fit your description.')
             for i in self.recipesarray:         #show recipes
@@ -336,10 +343,11 @@ class StateMachine():
                 rating = str(self.recipesMap[i]['rating']['ratingValue']) + '/5' if self.recipesMap[i]['rating'] != None else '-'
                 displayResults(title,img,totalTime,rating)    
 
-            print('Which one would you like to see?')
+            self.botQuestion = 'Which one would you like to see?'
+            print(self.botQuestion)
     
     def define_chosen_recipe(self):
-        myjson = self.qaExtractor.extractAnswer('Which one would you like to see?', self.userResponse)
+        myjson = self.qaExtractor.extractAnswer(self.botQuestion, self.userResponse)
 
         self.chosen_recipe = self.extractChosenRecipe(self.recipesarray, myjson['answer'])
 
@@ -370,7 +378,8 @@ class StateMachine():
 
 #skipingredientsstate
     def ask_skip_ingredients(self):
-        print('Would you like to know the needed ingredients?')
+        self.botQuestion = 'Would you like to know the needed ingredients?'
+        print(self.botQuestion)
 
 #show ingredients func
     def show_ingredientsFunc(self):
@@ -379,7 +388,8 @@ class StateMachine():
         ingredients = self.recipesMap[self.chosen_recipe]['recipe']['ingredients']
         displayIngredients(ingredients)
 
-        print('Are you ready to start cooking?')
+        self.botQuestion = 'Are you ready to start cooking?'
+        print(self.botQuestion)
     
 
 #show steps func
@@ -397,8 +407,12 @@ class StateMachine():
         if(self.currentStep == 0):
             print('Ok! Let\'s begin!\n')
         displayStep(img, self.currentStep+1, title, text)
-        if(self.currentStep < len(instructions)-1): print('Would you like to proceed to the next step?')
-        else: print('This was the last step, would you like to proceed?')
+        if(self.currentStep < len(instructions)-1):
+            self.botQuestion = 'Would you like to proceed to the next step?'
+            print(self.botQuestion)
+        else:
+            self.botQuestion = 'This was the last step, would you like to proceed?'
+            print(self.botQuestion)
         
     def define_next_step(self):
         self.currentStep = self.currentStep + 1
@@ -420,6 +434,9 @@ class StateMachine():
         self.recipesarray = []
         self.keywordsPositive = []
         self.keywordsNegative = []
+
+    def getBotQuestion(self):
+        return self.botQuestion
 
     def checkNegative(self, keyword):
         return "free" in keyword or "no" in keyword
