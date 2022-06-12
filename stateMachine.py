@@ -62,14 +62,10 @@ class StateMachine():
 
         #ask_for_desired_ingredients
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
-        self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
         self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients')
-        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
         self.machine.add_transition(trigger='AMAZON.SelectIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
-        self.machine.add_transition(trigger='NextStepIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
-        self.machine.add_transition(trigger='StartStepsIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
-        self.machine.add_transition(trigger='QuestionIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
-
+        self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
+        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_desired_ingredients', dest='ask_for_unwanted_ingredients', before='define_desired_ingredients')
 
         self.machine.add_transition(trigger='AMAZON.FallbackIntent', source='ask_for_desired_ingredients', dest='greeting', before='reset_desired_ingredients', conditions=['user_said_back'])
         self.machine.add_transition(trigger='PreviousStepIntent', source='ask_for_desired_ingredients', dest='greeting', before='reset_desired_ingredients', conditions=['user_said_back'])
@@ -78,46 +74,34 @@ class StateMachine():
         #ask_for_unwanted_ingredients
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
         self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords')
-        self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
-        self.machine.add_transition(trigger='QuestionIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
-        self.machine.add_transition(trigger='NextStepIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
-        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
         self.machine.add_transition(trigger='AMAZON.SelectIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
-        self.machine.add_transition(trigger='StartStepsIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
+        self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
+        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_unwanted_ingredients', dest='ask_for_keywords', before='define_unwanted_ingredients')
        
         self.machine.add_transition(trigger='AMAZON.FallbackIntent', source='ask_for_unwanted_ingredients', dest='ask_for_desired_ingredients', before='reset_unwanted_ingredients',conditions=['user_said_back'])
         self.machine.add_transition(trigger='PreviousStepIntent', source='ask_for_unwanted_ingredients', dest='ask_for_desired_ingredients', before='reset_unwanted_ingredients',conditions=['user_said_back'])
         
         #ask_for_keywords
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
+        self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_keywords', dest='ask_for_time_restrictions')        
+        self.machine.add_transition(trigger='AMAZON.SelectIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')        
+        self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')        
         self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
-        self.machine.add_transition(trigger='StartStepsIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
-        self.machine.add_transition(trigger='AMAZON.SelectIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
-        self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_keywords', dest='ask_for_time_restrictions')
-        self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
-        self.machine.add_transition(trigger='NextStepIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
-        self.machine.add_transition(trigger='QuestionIntent', source='ask_for_keywords', dest='ask_for_time_restrictions', before='define_keywords')
-
-        self.machine.add_transition(trigger='PreviousStepIntent', source='ask_for_keywords', dest='ask_for_unwanted_ingredients', before='reset_keywords',conditions=['user_said_back'])
+        
         self.machine.add_transition(trigger='AMAZON.FallbackIntent', source='ask_for_keywords', dest='ask_for_unwanted_ingredients', before='reset_keywords',conditions=['user_said_back'])
+        self.machine.add_transition(trigger='PreviousStepIntent', source='ask_for_keywords', dest='ask_for_unwanted_ingredients', before='reset_keywords',conditions=['user_said_back'])
 
         #ask_for_time_restrictions
-        self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_time_restrictions', dest='show_top_recipes')
         self.machine.add_transition(trigger='AMAZON.YesIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
-        self.machine.add_transition(trigger='IngredientsConfirmationIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
-        self.machine.add_transition(trigger='NextStepIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
-        self.machine.add_transition(trigger='IdentifyProcessIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
+        self.machine.add_transition(trigger='AMAZON.NoIntent', source='ask_for_time_restrictions', dest='show_top_recipes')
         self.machine.add_transition(trigger='AMAZON.SelectIntent', source='ask_for_time_restrictions', dest='show_top_recipes', before='define_time_restrictions')
 
-        self.machine.add_transition(trigger='PreviousStepIntent', source='ask_for_time_restrictions', dest='ask_for_keywords', before='reset_time_restrictions',conditions=['user_said_back'])
         self.machine.add_transition(trigger='AMAZON.FallbackIntent', source='ask_for_time_restrictions', dest='ask_for_keywords', before='reset_time_restrictions',conditions=['user_said_back'])
+        self.machine.add_transition(trigger='PreviousStepIntent', source='ask_for_time_restrictions', dest='ask_for_keywords', before='reset_time_restrictions',conditions=['user_said_back'])
 
         #show_top_recipes
-        self.machine.add_transition(trigger='QuestionIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
         self.machine.add_transition(trigger='AMAZON.SelectIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
         self.machine.add_transition(trigger='IdentifyProcessIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
-        self.machine.add_transition(trigger='NextStepIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
-        self.machine.add_transition(trigger='GoToStepIntent', source='show_top_recipes', dest='skipIngredientsState', before='define_chosen_recipe')
 
         self.machine.add_transition(trigger='PreviousStepIntent', source='show_top_recipes', dest='ask_for_time_restrictions', before='reset_chosen_recipe',conditions=['user_said_back'])
         self.machine.add_transition(trigger='AMAZON.FallbackIntent', source='show_top_recipes', dest='ask_for_time_restrictions', before='reset_chosen_recipe',conditions=['user_said_back'])
@@ -182,7 +166,7 @@ class StateMachine():
 #desired ings functions
     def ask_for_desired_ingredientsFunc(self):
         self.desired_ingredients = []
-        self.botQuestion = 'Are there any desired ingredients you\'d like the recipe to have? If so, could you enumerate them?'
+        self.botQuestion = 'Are there any desired ingredients you\'d like the recipe to have?'
         print(self.botQuestion)
 
     def define_desired_ingredients(self):
@@ -219,7 +203,7 @@ class StateMachine():
 #unwanted ings functions
     def ask_for_unwanted_ingredientsFunc(self): 
         self.unwanted_ingredients = []
-        self.botQuestion = 'Are there any ingredients you really don\'t want in the recipe? If so, could you also enumerate them?'
+        self.botQuestion = 'Are there any ingredients you really don\'t want in the recipe?'
         print(self.botQuestion)
         
 
